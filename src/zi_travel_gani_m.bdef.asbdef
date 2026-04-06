@@ -16,6 +16,7 @@ authorization master ( instance )
 }
 
 define behavior for zi_booking_gani_m //alias <alias_name>
+implementation in class zcl_bp_booking_gani_m unique
 persistent table zbooking_gani_m
 lock dependent by _Travel
 authorization dependent by _Travel
@@ -29,6 +30,7 @@ authorization dependent by _Travel
 }
 
 define behavior for zi_booksuppl_gani_m //alias <alias_name>
+implementation in class zcl_bp_booksuppl_gani_m unique
 persistent table zbooksupp_gani_m
 lock dependent by _travel
 authorization dependent by _travel
