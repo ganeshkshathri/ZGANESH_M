@@ -1,0 +1,41 @@
+managed implementation in class zbp_i_travel_gani_m unique;
+strict ( 2 );
+
+define behavior for zi_travel_gani_m //alias <alias_name>
+persistent table ztravel_ganesh_m
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create ( authorization : global );
+  update;
+  delete;
+  field ( readonly ) TravelId;
+  association _Booking { create; }
+}
+
+define behavior for zi_booking_gani_m //alias <alias_name>
+persistent table zbooking_gani_m
+lock dependent by _Travel
+authorization dependent by _Travel
+//etag master <field_name>
+{
+  update;
+  delete;
+  field ( readonly ) TravelId, BookingId;
+  association _Travel;
+  association _BookingSuppl { create; }
+}
+
+define behavior for zi_booksuppl_gani_m //alias <alias_name>
+persistent table zbooksupp_gani_m
+lock dependent by _travel
+authorization dependent by _travel
+//etag master <field_name>
+{
+  update;
+  delete;
+  field ( readonly ) TravelId, BookingId, BookingSupplementId;
+  association _travel;
+  association _booking;
+}

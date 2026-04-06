@@ -1,0 +1,6 @@
+@EndUserText.label: 'Service Defination Manged'
+define service Zsr_travel_gani_m {
+  expose zc_travel_gani_m;
+  expose zc_booking_gani_m;
+  expose zc_booksuppl_gani_m;
+}

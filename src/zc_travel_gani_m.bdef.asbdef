@@ -1,0 +1,29 @@
+projection;
+strict ( 2 );
+
+define behavior for zc_travel_gani_m //alias <alias_name>
+{
+  use create;
+  use update;
+  use delete;
+
+  use association _Booking { create; }
+}
+
+define behavior for zc_booking_gani_m //alias <alias_name>
+{
+  use update;
+  use delete;
+
+  use association _Travel;
+  use association _BookingSuppl { create; }
+}
+
+define behavior for zc_booksuppl_gani_m //alias <alias_name>
+{
+  use update;
+  use delete;
+
+  use association _travel;
+  use association _booking;
+}
