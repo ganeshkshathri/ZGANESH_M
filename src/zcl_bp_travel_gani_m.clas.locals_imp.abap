@@ -108,9 +108,10 @@ CLASS lhc_zi_travel_gani_m IMPLEMENTATION.
       LOOP AT entities ASSIGNING FIELD-SYMBOL(<ls_entities>) USING KEY entity WHERE TravelId = <ls_group>-TravelId.
 
         LOOP AT <ls_entities>-%target ASSIGNING FIELD-SYMBOL(<ls_booking>).
+          APPEND  CORRESPONDING #( <ls_booking> ) TO  mapped-zi_booking_gani_m ASSIGNING FIELD-SYMBOL(<ls_new_map_book>).
           IF <ls_booking>-BookingId IS INITIAL.
             lv_max_booking += 10.
-            APPEND  CORRESPONDING #( <ls_booking> ) TO  mapped-zi_booking_gani_m ASSIGNING FIELD-SYMBOL(<ls_new_map_book>).
+
             <ls_new_map_book>-BookingId = lv_max_booking.
           ENDIF.
         ENDLOOP.
@@ -125,6 +126,86 @@ CLASS lhc_zi_travel_gani_m IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD copyTravel.
+
+    DATA:it_travel        TYPE TABLE FOR CREATE zi_travel_gani_m,
+         it_booking_cba   TYPE TABLE FOR CREATE zi_travel_gani_m\_Booking,
+         it_booksuppl_cba TYPE TABLE FOR CREATE zi_booking_gani_m\_BookingSuppl.
+
+    READ TABLE keys ASSIGNING FIELD-SYMBOL(<ls_without_cid>) WITH KEY %cid = ' '.
+*    ASSERT <ls_without_cid> IS INITIAL.
+
+    READ ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+     ENTITY zi_travel_gani_m
+     ALL FIELDS WITH CORRESPONDING #( keys )
+     RESULT DATA(lt_travel_r)
+     FAILED DATA(lt_failed_r).
+
+    READ ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+     ENTITY zi_travel_gani_m BY \_Booking
+     ALL FIELDS WITH CORRESPONDING #( lt_travel_r )
+     RESULT DATA(lt_booking_r).
+
+
+    READ ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+     ENTITY zi_booking_gani_m BY \_BookingSuppl
+     ALL FIELDS WITH CORRESPONDING #( lt_booking_r )
+     RESULT DATA(lt_booksupp_r).
+
+    LOOP AT lt_travel_r ASSIGNING FIELD-SYMBOL(<ls_travel_r>).
+*      APPEND INITIAL LINE TO it_travel ASSIGNING FIELD-SYMBOL(<ls_travel>).
+*      <ls_travel>-%cid = keys[ KEY entity TravelId = <ls_travel_r>-TravelId ]-%cid.
+*      <ls_travel>-%data = CORRESPONDING #(  <ls_travel_r>  except TravelId ).
+
+      APPEND VALUE #(  %cid = keys[ KEY entity TravelId = <ls_travel_r>-TravelId ]-%cid
+                       %data = CORRESPONDING #(  <ls_travel_r>  EXCEPT TravelId )
+                    ) TO it_travel ASSIGNING FIELD-SYMBOL(<ls_travel>).
+
+      <ls_travel>-BeginDate = cl_abap_context_info=>get_system_date( ).
+      <ls_travel>-EndDate = cl_abap_context_info=>get_system_date( ) + 30.
+      <ls_travel>-OverallStatus = 'O'.
+
+      APPEND VALUE #( %cid_ref =  <ls_travel>-%cid ) TO it_booking_cba ASSIGNING FIELD-SYMBOL(<it_booking>).
+
+      LOOP AT lt_booking_r ASSIGNING FIELD-SYMBOL(<ls_booking_r>) USING KEY entity
+                                             WHERE TravelId = <ls_travel_r>-TravelId.
+        APPEND VALUE #( %cid = <ls_travel>-%cid && <ls_booking_r>-BookingId
+                        %data = CORRESPONDING #(  <ls_booking_r> EXCEPT TravelId ) )
+                        TO <it_booking>-%target ASSIGNING FIELD-SYMBOL(<ls_booking_n>).
+        <ls_booking_n>-BookingStatus = 'N'.
+
+        APPEND VALUE #(  %cid_ref = <ls_booking_n>-%cid )
+        TO it_booksuppl_cba ASSIGNING FIELD-SYMBOL(<ls_booksupp>).
+
+        LOOP AT lt_booksupp_r ASSIGNING FIELD-SYMBOL(<ls_booksupp_r>) USING KEY entity
+                                                    WHERE TravelId = <ls_travel_r>-TravelId
+                                                      AND BookingId = <ls_booking_n>-BookingId.
+
+          APPEND VALUE #(  %cid = <ls_travel>-%cid && <ls_booking_r>-BookingId &&  <ls_booksupp_r>-BookingSupplementId
+                           %data = CORRESPONDING #( <ls_booksupp_r> EXCEPT TravelId BookingID )
+           ) TO <ls_booksupp>-%target.
+
+
+        ENDLOOP.
+      ENDLOOP.
+    ENDLOOP.
+
+    MODIFY ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+    ENTITY zi_travel_gani_m
+    CREATE FIELDS ( AgencyId CustomerId BeginDate EndDate TotalPrice BookingFee CurrencyCode OverallStatus Description )
+    WITH it_travel
+    ENTITY zi_travel_gani_m
+    CREATE BY \_Booking
+    FIELDS ( BookingId BookingDate BookingStatus CustomerId CarrierId ConnectionId FlightDate FlightPrice CurrencyCode  )
+    WITH it_booking_cba
+    ENTITY zi_booking_gani_m
+    CREATE BY \_BookingSuppl
+    FIELDS (  BookingSupplementId CurrencyCode SupplementId Price )
+    WITH it_booksuppl_cba
+    MAPPED DATA(it_mapped).
+
+    mapped-zi_travel_gani_m = it_mapped-zi_travel_gani_m.
+
+
   ENDMETHOD.
 
   METHOD recalcTotalPrice.

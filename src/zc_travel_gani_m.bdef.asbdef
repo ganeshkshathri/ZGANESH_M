@@ -9,6 +9,7 @@ use etag
   use delete;
 
   use association _Booking { create; }
+  use action copyTravel;
 }
 
 define behavior for zc_booking_gani_m //alias <alias_name>

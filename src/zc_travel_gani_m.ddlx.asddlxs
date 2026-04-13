@@ -27,7 +27,12 @@ annotate view zc_travel_gani_m with
       targetElement: '_Booking'
 
   }]
-  @UI.lineItem: [{ position : 10  }]
+  @UI.lineItem: [{ position : 10  },
+                 { type : #FOR_ACTION , dataAction: 'copyTravel', label: 'Copy Travel'}
+                 ]
+
+
+
   @UI.identification: [{ position: 10  }]
   @Search.defaultSearchElement: true
   TravelId;

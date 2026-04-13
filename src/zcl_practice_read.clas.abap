@@ -70,6 +70,32 @@ CLASS zcl_practice_read IMPLEMENTATION.
 *      out->write( it_result ).
 *      out->write( it_result1 ).
 *    ENDIF.
+    DATA:lt_book TYPE TABLE FOR CREATE zi_travel_gani_m\_Booking.
+
+    MODIFY ENTITY zi_travel_gani_m
+    CREATE FROM VALUE #(
+                         ( %cid = 'cid1'
+                          %data-BeginDate = '20240425'
+                          %control-BeginDate = if_abap_behv=>mk-on
+     ) )
+     CREATE BY \_Booking
+     FROM VALUE #( ( %cid_ref = 'cid1'
+                     %target = VALUE #( ( %cid = 'cid11'
+                                          %data-BookingDate = '20240425'
+                                          %control-BookingDate = if_abap_behv=>mk-on
+                                       ) )
+                   ) )
+   FAILED FINAL(it_failed)
+   MAPPED FINAL(it_mapped)
+   REPORTED FINAL(it_reported).
+    IF it_failed IS NOT INITIAL.
+      out->write( it_failed ).
+    ELSE.
+      COMMIT ENTITIES.
+    ENDIF.
+
+
+
 
   ENDMETHOD.
 
