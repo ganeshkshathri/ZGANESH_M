@@ -29,6 +29,7 @@ annotate view zc_travel_gani_m with
   }]
   @UI.lineItem: [{ position : 10  }]
   @UI.identification: [{ position: 10  }]
+  @Search.defaultSearchElement: true
   TravelId;
   @UI : { lineItem: [{ position : 20  }],
           selectionField: [{ position: 20 }],

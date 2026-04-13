@@ -6,6 +6,17 @@ CLASS lhc_zi_travel_gani_m DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS get_global_authorizations FOR GLOBAL AUTHORIZATION
       IMPORTING REQUEST requested_authorizations FOR zi_travel_gani_m RESULT result.
+    METHODS accepttravel FOR MODIFY
+      IMPORTING keys FOR ACTION zi_travel_gani_m~accepttravel RESULT result.
+
+    METHODS copytravel FOR MODIFY
+      IMPORTING keys FOR ACTION zi_travel_gani_m~copytravel.
+
+    METHODS recalctotalprice FOR MODIFY
+      IMPORTING keys FOR ACTION zi_travel_gani_m~recalctotalprice.
+
+    METHODS rejecttravel FOR MODIFY
+      IMPORTING keys FOR ACTION zi_travel_gani_m~rejecttravel RESULT result.
     METHODS earlynumbering_cba_booking FOR NUMBERING
       IMPORTING entities FOR CREATE zi_travel_gani_m\_booking.
 
@@ -108,6 +119,18 @@ CLASS lhc_zi_travel_gani_m IMPLEMENTATION.
     ENDLOOP.
 
 
+  ENDMETHOD.
+
+  METHOD acceptTravel.
+  ENDMETHOD.
+
+  METHOD copyTravel.
+  ENDMETHOD.
+
+  METHOD recalcTotalPrice.
+  ENDMETHOD.
+
+  METHOD rejectTravel.
   ENDMETHOD.
 
 ENDCLASS.
