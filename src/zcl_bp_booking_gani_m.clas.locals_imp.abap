@@ -6,6 +6,8 @@ CLASS lhc_zi_booking_gani_m DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING entities FOR CREATE zi_booking_gani_m\_Bookingsuppl.
     METHODS get_instance_features FOR INSTANCE FEATURES
       IMPORTING keys REQUEST requested_features FOR zi_booking_gani_m RESULT result.
+    METHODS calculatetotalprice FOR DETERMINE ON MODIFY
+      IMPORTING keys FOR zi_booking_gani_m~calculatetotalprice.
 
 ENDCLASS.
 
@@ -76,6 +78,18 @@ CLASS lhc_zi_booking_gani_m IMPLEMENTATION.
                                                                      )
                    ).
 
+  ENDMETHOD.
+
+  METHOD calculateTotalPrice.
+
+    DATA:it_travel TYPE STANDARD TABLE OF zi_travel_gani_m WITH UNIQUE HASHED KEY key COMPONENTS TravelId.
+
+    it_travel = CORRESPONDING #( keys DISCARDING DUPLICATES MAPPING TravelId = TravelId ).
+
+    MODIFY ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+    ENTITY zi_travel_gani_m
+    EXECUTE recalcTotalPrice
+    FROM CORRESPONDING #( it_travel ).
   ENDMETHOD.
 
 ENDCLASS.

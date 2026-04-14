@@ -1,5 +1,6 @@
 projection;
 strict ( 2 );
+use side effects;
 
 define behavior for zc_travel_gani_m //alias <alias_name>
 use etag

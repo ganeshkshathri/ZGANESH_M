@@ -18,6 +18,10 @@ early numbering
 
   validation validateCustomer on save { create; field CustomerId; }
 
+  determination calculateTotalPrice on modify { create; field BookingFee, CurrencyCode; }
+
+  side effects { field BookingFee affects field TotalPrice; }
+
   create ( authorization : global );
   update;
   delete;
@@ -58,6 +62,7 @@ early numbering
   field ( mandatory : create, readonly : update ) BookingDate, CustomerId;
   association _Travel;
   association _BookingSuppl { create ( features : instance ); }
+  determination calculateTotalPrice on modify { create; field FlightPrice, CurrencyCode; }
   mapping for zbooking_gani_m
     {
       TravelId      = travel_id;
@@ -88,6 +93,7 @@ early numbering
   field ( mandatory ) Price, SupplementId;
   association _travel;
   association _booking;
+  determination calculateTotalPrice on modify { create; field Price, CurrencyCode; }
   mapping for zbooksupp_gani_m
     {
       TravelId            = travel_id;
