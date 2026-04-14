@@ -4,6 +4,8 @@ CLASS lhc_zi_booking_gani_m DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS earlynumbering_cba_Bookingsupp FOR NUMBERING
       IMPORTING entities FOR CREATE zi_booking_gani_m\_Bookingsuppl.
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR zi_booking_gani_m RESULT result.
 
 ENDCLASS.
 
@@ -57,6 +59,23 @@ CLASS lhc_zi_booking_gani_m IMPLEMENTATION.
       ENDLOOP.
 
     ENDLOOP.
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+    READ ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+       ENTITY zi_travel_gani_m BY \_Booking
+       FIELDS ( TravelId BookingStatus )
+       WITH CORRESPONDING #( keys )
+       RESULT DATA(lt_booking).
+
+    result  = VALUE #( FOR ls_booking IN lt_booking
+                        (  %tky = ls_booking-%tky
+                           %features-%assoc-_Bookingsuppl  = COND #( WHEN ls_booking-BookingStatus = 'X'
+                                                                    THEN if_abap_behv=>fc-o-disabled
+                                                                    ELSE if_abap_behv=>fc-o-enabled )
+                                                                     )
+                   ).
+
   ENDMETHOD.
 
 ENDCLASS.

@@ -17,6 +17,10 @@ CLASS lhc_zi_travel_gani_m DEFINITION INHERITING FROM cl_abap_behavior_handler.
 
     METHODS rejecttravel FOR MODIFY
       IMPORTING keys FOR ACTION zi_travel_gani_m~rejecttravel RESULT result.
+    METHODS get_instance_features FOR INSTANCE FEATURES
+      IMPORTING keys REQUEST requested_features FOR zi_travel_gani_m RESULT result.
+    METHODS validatecustomer FOR VALIDATE ON SAVE
+      IMPORTING keys FOR zi_travel_gani_m~validatecustomer.
     METHODS earlynumbering_cba_booking FOR NUMBERING
       IMPORTING entities FOR CREATE zi_travel_gani_m\_booking.
 
@@ -123,6 +127,22 @@ CLASS lhc_zi_travel_gani_m IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD acceptTravel.
+    MODIFY ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+     ENTITY zi_travel_gani_m
+     UPDATE FIELDS ( OverallStatus )
+     WITH VALUE #( FOR ls_keys IN keys ( %tky = ls_keys-%tky
+                                         OverallStatus = 'A'
+
+                                       ) ).
+
+    READ ENTITIES OF zi_travel_gani_m IN  LOCAL MODE
+    ENTITY zi_travel_gani_m
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+    result = VALUE #( FOR ls_result IN lt_result ( %tky = ls_result-%tky
+                                                    %param = ls_result
+                    ) ).
+
   ENDMETHOD.
 
   METHOD copyTravel.
@@ -212,6 +232,81 @@ CLASS lhc_zi_travel_gani_m IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD rejectTravel.
+    MODIFY ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+     ENTITY zi_travel_gani_m
+     UPDATE FIELDS ( OverallStatus )
+     WITH VALUE #( FOR ls_keys IN keys ( %tky = ls_keys-%tky
+                                         OverallStatus = 'X'
+
+                                       ) ).
+
+    READ ENTITIES OF zi_travel_gani_m IN  LOCAL MODE
+    ENTITY zi_travel_gani_m
+    ALL FIELDS WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_result).
+    result = VALUE #( FOR ls_result IN lt_result ( %tky = ls_result-%tky
+                                                    %param = ls_result
+                    ) ).
+
+  ENDMETHOD.
+
+  METHOD get_instance_features.
+    READ ENTITIES OF zi_travel_gani_m IN LOCAL MODE
+     ENTITY zi_travel_gani_m
+     FIELDS ( TravelId OverallStatus )
+     WITH CORRESPONDING #( keys )
+     RESULT DATA(lt_travel).
+
+    result  = VALUE #( FOR ls_travel IN lt_travel
+                        (  %tky = ls_travel-%tky
+                           %features-%action-acceptTravel = COND #( WHEN ls_travel-OverallStatus = 'A'
+                                                                    THEN if_abap_behv=>fc-o-disabled
+                                                                    ELSE if_abap_behv=>fc-o-enabled )
+                           %features-%action-rejectTravel = COND #( WHEN ls_travel-OverallStatus = 'X'
+                                                                    THEN if_abap_behv=>fc-o-disabled
+                                                                    ELSE if_abap_behv=>fc-o-enabled )
+                           %features-%assoc-_Booking  = COND #( WHEN ls_travel-OverallStatus = 'X'
+                                                                    THEN if_abap_behv=>fc-o-disabled
+                                                                    ELSE if_abap_behv=>fc-o-enabled )
+                                                                     )
+                   ).
+  ENDMETHOD.
+
+  METHOD validateCustomer.
+    READ ENTITY IN LOCAL MODE zi_travel_gani_m
+    FIELDS ( CustomerId )
+    WITH CORRESPONDING #( keys )
+    RESULT DATA(lt_travel).
+
+    DATA:lt_cust TYPE SORTED TABLE OF /dmo/customer WITH UNIQUE KEY customer_id.
+
+    lt_cust = CORRESPONDING #( lt_travel DISCARDING DUPLICATES MAPPING customer_id = CustomerId ).
+    DELETE lt_cust WHERE customer_id IS INITIAL.
+    DELETE ADJACENT DUPLICATES FROM lt_travel COMPARING CustomerId.
+    SELECT FROM /dmo/customer
+    FIELDS customer_id
+    FOR ALL ENTRIES IN @lt_cust
+    WHERE customer_id = @lt_cust-customer_id
+    INTO TABLE @DATA(lt_cust_db).
+    IF sy-subrc IS INITIAL.
+
+    ENDIF.
+    LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<ls_travel>).
+      IF <ls_travel>-CustomerId IS INITIAL OR NOT line_exists(  lt_cust_db[ customer_id = <ls_travel>-CustomerId ] ) .
+        APPEND VALUE #( %tky = <ls_travel>-%tky ) TO failed-zi_travel_gani_m.
+        APPEND VALUE #( %tky = <ls_travel>-%tky
+                                        %msg = NEW /dmo/cm_flight_messages(
+                          textid                =  /dmo/cm_flight_messages=>customer_unkown
+                          customer_id           =  <ls_travel>-CustomerId
+                          severity              =  if_abap_behv_message=>severity-error
+                      )
+                      %element-CustomerID = if_abap_behv=>mk-on
+         ) TO reported-zi_travel_gani_m.
+
+      ENDIF.
+
+    ENDLOOP.
+
   ENDMETHOD.
 
 ENDCLASS.
